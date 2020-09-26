@@ -43,13 +43,13 @@ def generateAll():
     #generateCelo()
     #generateCyberGhost()
     #generateExpressVPN()
-    #generateHideMe()
+    generateHideMe()
     #generateHMA()
     #generateHideIPVPN()
     #generateibVPN()
     #generateIPVanish()
     #generateIVPN()
-    generateLimeVPN()
+    #generateLimeVPN()
     #generateLiquidVPN()
     #generateMullvad()
     #generatePerfectPrivacy()
@@ -275,14 +275,23 @@ def generateExpressVPN():
 
     
 def generateHideMe():
-    # Data is stored in ovpn files with location info in Servers.txt
-    location_file = getLocations("HideMe", "")
+    # Data is stored in ovpn files
     profiles = getProfileList("HideMe")
+    location_file = getLocations("HideMe", "")
     for profile in profiles:
+        geo = profile[profile.rfind("\\")+1:profile.index(".ovpn")]
+        geo = geo.replace(".hideservers.net", "")
+        geo = geo.replace("-", " ")
+        if len(geo) == 2:
+            geo = resolveCountry(geo.upper())
+        else:
+            geo = string.capwords(geo)
+            geo = geo.replace("Lasvegas", "Las Vegas")
+            geo = geo.replace("Newyorkcity", "New York City")
+            geo = geo.replace("Losangeles", "Los Angeles")
         profile_file = open(profile, 'r')
         lines = profile_file.readlines()
         profile_file.close()
-        geo = profile[profile.rfind("\\")+1:profile.index(".ovpn")]
         for line in lines:
             if line.startswith("remote "):
                 _, server, port = line.split()
@@ -556,19 +565,22 @@ def generateMullvad():
     for profile in profiles:
         geo = profile[profile.index("mullvad_")+8:]
         geo = geo.replace("gb", "uk")
-        geo = geo.replace(".conf", "")
-        if geo.startswith("us") or geo.startswith("ca"): geo = geo.upper()
-        else: geo = geo.title()
+        geo = geo.replace("_all.conf", "")
         geo = resolveCountry(geo[0:2].upper()) + geo[2:]
-        geo = geo.replace("-"," - ")
         profile_file = open(profile, 'r')
         lines = profile_file.readlines()
         profile_file.close()
+        servers = ""
+        ports = ""
         for line in lines:
             if line.startswith("remote "):
-                _, server, port = line.split()  
-        output_line_udp = geo + " (UDP)," + server + "," + "udp," + str(port) + ",\n"
-        output_line_tcp = geo + " (TCP)," + server + "," + "tcp,443,#REMOVE=1" + "\n"
+                _, server, port = line.split()
+                if not servers == "" : servers = servers + " "
+                servers = servers + server
+                if not ports == "" : ports = ports + " "
+                ports = ports + str(port)
+        output_line_udp = geo + " (UDP)," + servers + "," + "udp," + ports + ",\n"
+        output_line_tcp = geo + " (TCP)," + servers + "," + "tcp,443,#REMOVE=1" + "\n"
         location_file.write(output_line_udp)
         location_file.write(output_line_tcp)
     location_file.close()
