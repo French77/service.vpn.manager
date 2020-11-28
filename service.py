@@ -26,7 +26,6 @@ import os
 import time
 import random
 import datetime
-import urllib2
 import re
 import string
 from libs.common import updateServiceRequested, ackUpdate, setVPNProfile, getVPNProfileFriendly, setVPNProfileFriendly, getReconnectTime
@@ -40,7 +39,7 @@ from libs.common import forceReconnect, isForceReconnect, updateIPInfo, updateAP
 from libs.common import getVPNServer, setReconnectTime, configUpdate, resumeStartStop, suspendStartStop, checkDirectory, clearServiceState, getVPNServerFromFile
 from libs.vpnplatform import getPlatform, platforms, connection_status, getAddonPath, writeVPNLog, supportSystemd, addSystemd, removeSystemd, copySystemdFiles
 from libs.vpnplatform import isVPNTaskRunning, updateSystemTime, fakeConnection, fakeItTillYouMakeIt, generateVPNs, writeVPNConfiguration
-from libs.utility import debugTrace, errorTrace, infoTrace, ifDebug, newPrint, setID, setName, setShort, setVery, running, setRunning, now, isCustom
+from libs.utility import debugTrace, errorTrace, infoTrace, ifDebug, newPrint, setID, setName, getShort, setShort, setVery, running, setRunning, now, isCustom
 from libs.vpnproviders import removeGeneratedFiles, cleanPassFiles, fixOVPNFiles, getVPNLocation, usesPassAuth, clearKeysAndCerts, checkForVPNUpdates
 from libs.vpnproviders import populateSupportingFromGit, isAlternative, regenerateAlternative, getAlternativeLocation, updateVPNFile, checkUserDefined
 from libs.vpnproviders import getUserDataPath, getAlternativeMessages, postConnectAlternative
@@ -63,6 +62,7 @@ while count < 6:
         addon_very = addon.getSetting("vpn_very")
         setVery(addon_very)
         xbmc.sleep(100)
+        addon = xbmcaddon.Addon()
         break
     except Exception as e:
         # Try again in 5 seconds
@@ -216,6 +216,10 @@ if __name__ == '__main__' and not running():
     shutdown = False
     stop_vpn = False
 
+    # Put the Kodi version on the home window in case it's needed to change behaviour for different levels
+    xbmcgui.Window(10000).setProperty("VPN_Manager_Kodi_Version", xbmc.getInfoLabel('System.BuildVersionShort'))
+    
+    # Trace that the service has started
     infoTrace("service.py", "Starting VPN monitor service, platform is " + str(getPlatform()) + ", version is " + addon.getAddonInfo("version"))
     infoTrace("service.py", "Kodi build is " + xbmc.getInfoLabel('System.BuildVersion'))
     infoTrace("service.py", "Addon path is " + getAddonPath(True, ""))
@@ -570,7 +574,7 @@ if __name__ == '__main__' and not running():
                             # Don't know why we're disconnected, but reconnect to the last known VPN
                             errorTrace("service.py", "VPN monitor service detected VPN connection " + getVPNProfile() + " is not running when it should be")
                             writeVPNConfiguration(getVPNProfile())
-                            writeVPNLog()       
+                            writeVPNLog()
                             if getVPNRequestedProfile() == "":
                                 if getVPNProfile() == "":
                                     # This can happen if something kills processes and windows.  Only thing

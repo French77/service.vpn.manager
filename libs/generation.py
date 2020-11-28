@@ -22,15 +22,21 @@
 
 
 import xbmc
+# FIXME PYTHON3
+try:
+    import urllib2 # This is just to cause an assert in Kodi 19
+    from xbmc import translatePath as translatePath
+except:
+    from xbmcvfs import translatePath as translatePath
 import xbmcgui
 import xbmcvfs
 import glob
 import string
 import os.path
 import time
-from utility import debugTrace, errorTrace, infoTrace, newPrint
-from vpnplatform import getUserDataPath, fakeConnection
-from common import getFriendlyProfileName
+from libs.utility import debugTrace, errorTrace, infoTrace, newPrint
+from libs.vpnplatform import getUserDataPath, fakeConnection
+from libs.common import getFriendlyProfileName
 
 MINIMUM_LEVEL = "400"
 
@@ -43,7 +49,7 @@ def generateAll():
     #generateCelo()
     #generateCyberGhost()
     #generateExpressVPN()
-    generateHideMe()
+    #generateHideMe()
     #generateHMA()
     #generateHideIPVPN()
     #generateibVPN()
@@ -53,7 +59,7 @@ def generateAll():
     #generateLiquidVPN()
     #generateMullvad()
     #generatePerfectPrivacy()
-    #generatePIA()
+    generatePIA()
     #generatePrivateVPN()
     #generateproXPN()
     #generatePureVPN()
@@ -68,7 +74,7 @@ def generateAll():
     #generateVPNac()
     #generateVPNht()
     #generateVPNArea()
-    #generateVPNSecure()
+    generateVPNSecure()
     #generateVPNUnlimited()
     #generateVyprVPN()
     #generateWiTopia()
@@ -634,9 +640,9 @@ def generatePIA():
             if line.startswith("remote "):
                 _, server, port = line.split()  
         output_line_udp_def = geo + " (UDP)," + server + "," + "udp,1198" + ",#REMOVE=1 #CERT=ca.rsa.2048.crt #CRLVERIFY=crl.rsa.2048.pem\n"
-        output_line_tcp_def = geo + " (TCP)," + server + "," + "tcp,443" + ",#REMOVE=1 #CERT=ca.rsa.2048.crt #CRLVERIFY=crl.rsa.2048.pem\n"
+        output_line_tcp_def = geo + " (TCP)," + server + "," + "tcp,502" + ",#REMOVE=1 #CERT=ca.rsa.2048.crt #CRLVERIFY=crl.rsa.2048.pem\n"
         output_line_udp_strong = geo + " (UDP)," + server + "," + "udp,1197" + ",#REMOVE=2 #CERT=ca.rsa.4096.crt #CRLVERIFY=crl.rsa.4096.pem\n"
-        output_line_tcp_strong = geo + " (TCP)," + server + "," + "tcp,443" + ",#REMOVE=2 #CERT=ca.rsa.4096.crt #CRLVERIFY=crl.rsa.4096.pem\n"
+        output_line_tcp_strong = geo + " (TCP)," + server + "," + "tcp,501" + ",#REMOVE=2 #CERT=ca.rsa.4096.crt #CRLVERIFY=crl.rsa.4096.pem\n"
         location_file_def.write(output_line_udp_def)
         location_file_def.write(output_line_tcp_def)
         location_file_strong.write(output_line_udp_strong)
@@ -653,7 +659,7 @@ def generatePrivateVPN():
     location_file = getLocations("PrivateVPN", "")
     for profile in profiles:
         geo = profile[profile.rfind("\\")+1:profile.index(".ovpn")]
-        geo = geo.replace("PrivatVPN-", "")
+        geo = geo.replace("PrivateVPN-", "")
         geo = geo.replace("-TUN-443", "")
         geo = geo.replace("-TUN-1194", "")
         geo = geo.replace("-", "- ")
@@ -1114,7 +1120,7 @@ def generateVPNArea():
     
 
 def generateVPNSecure():
-    # Data is stored as a bunch of OVPN files
+    # Data is stored as a bunch of OVPN files, with the wrong URLs...
     # File name has location, file has server and port
     profiles = getProfileList("VPNSecure")
     location_file = getLocations("VPNSecure", "")
@@ -1127,17 +1133,21 @@ def generateVPNSecure():
             if line.startswith("remote "):
                 _, server, port = line.split()
         geo = resolveCountry(geo[0:2].upper()) + " " + geo[2:3]
+        server = server.replace("isponeder.com", "vpnsecure.me")
         if "ustream" in profile:
             geo = "Ustream 1"            
         if "-TCP" in profile:
             geo = geo + " (TCP)"
+            port = "110"
+            server = "tcp-" + server
             output_line = geo + "," + server + "," + "tcp," + port + "\n"
         else:
             geo = geo + " (UDP)"
+            port = "1282"
             output_line = geo + "," + server + "," + "udp," + port + "\n"
         location_file.write(output_line)
     location_file.close()    
-    generateMetaData("VPNSecure", MINIMUM_LEVEL)
+    generateMetaData("VPNSecure", "637")
 
 
 def generateVPNUnlimited():
@@ -1291,7 +1301,7 @@ def generateMetaData(vpn_provider, min_level):
     
 def getProviderPath(path):
     # Return the location of the provider output directory
-    return xbmc.translatePath("special://userdata/addon_data/service.vpn.manager.providers/" + path)
+    return translatePath("special://userdata/addon_data/service.vpn.manager.providers/" + path)
 
 
 def spaceOut(geo):
