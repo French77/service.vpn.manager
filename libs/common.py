@@ -255,11 +255,9 @@ def getIPInfo(addon):
         location = location + country
     if location == "": location = "Unknown"
 
-    # Have to dumb down the trace string to ASCII to avoid errors caused by foreign characters
-    # FIXME probably could fix this better with a decode UTF-8
     trace_text = "Received connection info from "  + source + ", IP " + ip + " location " + location + ", ISP " + isp
-    trace_text = str(trace_text.encode('ascii', 'ignore'))
-    infoTrace("common.py", trace_text)
+    trace_text = trace_text.encode('utf-8', 'ignore')
+    infoTrace("common.py", trace_text.decode("utf-8"))
     
     return source, ip, location, isp
 
@@ -1025,8 +1023,6 @@ def disconnectVPN(display_result):
         progress_message = "Disconnect cancelled, restarting VPN monitor..."
     
     dialog_message = ""
-    dialog_message_2 = ""
-    dialog_message_3 = ""
     # Restart service
     if not startService():
         progress.close()
@@ -1042,17 +1038,16 @@ def disconnectVPN(display_result):
         xbmc.executebuiltin('Container.Refresh')
         if display_result:
             _, ip, country, isp = getIPInfo(addon)
-            # Kodi18 bug, these should be one string with a \n between them
-            dialog_message = "[B]Disconnected from VPN[/B]"
-            dialog_message_2 = "Using " + ip + ", located in " + country
-            dialog_message_3 = "Service Provider is " + isp
+            dialog_message = "[B]Disconnected from VPN[/B]\n"
+            dialog_message = dialog_message + "Using " + ip + ", located in " + country + "\n"
+            dialog_message = dialog_message + "Service Provider is " + isp
         
         infoTrace("common.py", "Disconnected from the VPN")
 
     freeCycleLock()
     
     if display_result:
-        xbmcgui.Dialog().ok(addon_name, dialog_message, dialog_message_2, dialog_message_3)
+        xbmcgui.Dialog().ok(addon_name, dialog_message)
 
     
 def getCredentialsPath(addon):
@@ -2010,9 +2005,8 @@ def connectVPN(connection_order, vpn_profile):
                 dns_error = True
             else:
                 dialog_message = "[B]Connected to a VPN[/B]\nProfile is " + ovpn_name + server + "Using " + ip + ", located in " + country + "\nService Provider is " + isp
-        # Have to dumb down the trace string to ASCII to avoid errors caused by foreign characters
-        trace_message = dialog_message.encode('ascii', 'ignore')
-        infoTrace("common.py", trace_message)
+        trace_message = dialog_message.encode('utf-8', 'ignore')
+        infoTrace("common.py", trace_message.decode("utf-8"))
         if ifDebug(): writeVPNConfiguration(ovpn_connection)
         if ifDebug(): writeVPNLog()
         # Store that setup has been validated and the credentials used
